@@ -33,63 +33,63 @@ logger = logging.getLogger("synapse.blockstackpwds")
 
 
 class BlockstackPasswordProvider(object):
-    __version__ = "0.2"
+    __version__ = "0.2.1"
 
     def __init__(self, config, account_handler):
         self.account_handler = account_handler
         self.blockstack_node = config.blockstack_node
 
     def updateProfileFrom(self, claim, blockstack_id):
-		store = yield self.account_handler.hs.get_profile_handler().store
-		name = claim["name"]
-		logger.info("User name set to %s", name)
-		yield store.set_profile_displayname(blockstack_id, name)
-		avatar = claim["image"][0]["contentUrl"]
-		logger.info("User avatar set to %s", avatar)
-		yield store.set_profile_avatar_url(blockstack_id, avatar)
+        store = yield self.account_handler.hs.get_profile_handler().store
+        name = claim["name"]
+        logger.info("User name set to %s", name)
+        yield store.set_profile_displayname(blockstack_id, name)
+        avatar = claim["image"][0]["contentUrl"]
+        logger.info("User avatar set to %s", avatar)
+        yield store.set_profile_avatar_url(blockstack_id, avatar)
 
     @defer.inlineCallbacks
     def check_password(self, user_id, password):
-		if not password:
-			defer.returnValue(False)
-		blockstack_id = user_id.split(":", 1)[0][1:]
-		app = password.split("|")[1]
-		r = requests.get(self.blockstack_node + '/v1/names/' + blockstack_id)
-		if not r.status_code == requests.codes.ok:
-			defer.returnValue(False)
-		names_response = r.json()
-		logger.info("names %s", names_response)
-		z = blockstack_zones.parse_zone_file(names_response["zonefile"])
-		logger.info("zone %s", z)
-		r = requests.get(z["uri"][0]["target"])
-		if not r.status_code == requests.codes.ok:
-			defer.returnValue(False)
-		zone_file_response = r.json()
-		logger.info("zone %s", zone_file_response)
-		claim = zone_file_response[0]["decodedToken"]["payload"]["claim"]
-		appBucket = claim["apps"][app]
-		r = requests.get(appBucket+"mxid.json")
-		if not r.status_code == requests.codes.ok:
-			defer.returnValue(False)
-		mxid_response = r.text
-		logger.info("Response for user %s: %s", user_id, mxid_response)
-		if mxid_response == "mychallengefromserver":
-			if (yield self.account_handler.check_user_exists(user_id)):
-				logger.info("User %s exists, logging in", user_id)
-				self.updateProfileFrom(claim, blockstack_id)
-				defer.returnValue(True)
-			else:
-				try:
-					user_id, access_token = (yield self.account_handler.register(localpart=blockstack_id))
-					logger.info("User %s created, logging in", blockstack_id)
-					self.updateProfileFrom(claim, blockstack_id)
-					defer.returnValue(True)
-				except:
-					logger.warning("User %s not created", blockstack_id)
-					defer.returnValue(False)
-		else:
-			logger.warning("Wrong password for user %s", blockstack_id)
-			defer.returnValue(False)
+        if not password:
+            defer.returnValue(False)
+        blockstack_id = user_id.split(":", 1)[0][1:]
+        app = password.split("|")[1]
+        r = requests.get(self.blockstack_node + '/v1/names/' + blockstack_id)
+        if not r.status_code == requests.codes.ok:
+            defer.returnValue(False)
+        names_response = r.json()
+        logger.info("names %s", names_response)
+        z = blockstack_zones.parse_zone_file(names_response["zonefile"])
+        logger.info("zone %s", z)
+        r = requests.get(z["uri"][0]["target"])
+        if not r.status_code == requests.codes.ok:
+            defer.returnValue(False)
+        zone_file_response = r.json()
+        logger.info("zone %s", zone_file_response)
+        claim = zone_file_response[0]["decodedToken"]["payload"]["claim"]
+        appBucket = claim["apps"][app]
+        r = requests.get(appBucket+"mxid.json")
+        if not r.status_code == requests.codes.ok:
+            defer.returnValue(False)
+        mxid_response = r.text
+        logger.info("Response for user %s: %s", user_id, mxid_response)
+        if mxid_response == "mychallengefromserver":
+            if (yield self.account_handler.check_user_exists(user_id)):
+                logger.info("User %s exists, logging in", user_id)
+                self.updateProfileFrom(claim, blockstack_id)
+                defer.returnValue(True)
+            else:
+                try:
+                    user_id, access_token = (yield self.account_handler.register(localpart=blockstack_id))
+                    logger.info("User %s created, logging in", blockstack_id)
+                    self.updateProfileFrom(claim, blockstack_id)
+                    defer.returnValue(True)
+                except:
+                    logger.warning("User %s not created", blockstack_id)
+                    defer.returnValue(False)
+        else:
+            logger.warning("Wrong password for user %s", blockstack_id)
+            defer.returnValue(False)
 
     @staticmethod
     def parse_config(config):
