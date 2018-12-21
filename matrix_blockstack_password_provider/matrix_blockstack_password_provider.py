@@ -29,15 +29,24 @@ import blockstack_zones
 import logging
 import requests
 
-logger = logging.getLogger("synapse.authprovider")
+logger = logging.getLogger("synapse.blockstackpwds")
 
 
 class BlockstackPasswordProvider(object):
-    __version__ = "0.1"
+    __version__ = "0.2"
 
     def __init__(self, config, account_handler):
         self.account_handler = account_handler
         self.blockstack_node = config.blockstack_node
+
+    def updateProfileFrom(self, claim, blockstack_id):
+		store = yield self.account_handler.hs.get_profile_handler().store
+		name = claim["name"]
+		logger.info("User name set to %s", name)
+		yield store.set_profile_displayname(blockstack_id, name)
+		avatar = claim["image"][0]["contentUrl"]
+		logger.info("User avatar set to %s", avatar)
+		yield store.set_profile_avatar_url(blockstack_id, avatar)
 
     @defer.inlineCallbacks
     def check_password(self, user_id, password):
@@ -57,7 +66,8 @@ class BlockstackPasswordProvider(object):
 			defer.returnValue(False)
 		zone_file_response = r.json()
 		logger.info("zone %s", zone_file_response)
-		appBucket = zone_file_response[0]["decodedToken"]["payload"]["claim"]["apps"][app]
+		claim = zone_file_response[0]["decodedToken"]["payload"]["claim"]
+		appBucket = claim["apps"][app]
 		r = requests.get(appBucket+"mxid.json")
 		if not r.status_code == requests.codes.ok:
 			defer.returnValue(False)
@@ -66,11 +76,13 @@ class BlockstackPasswordProvider(object):
 		if mxid_response == "mychallengefromserver":
 			if (yield self.account_handler.check_user_exists(user_id)):
 				logger.info("User %s exists, logging in", user_id)
+				self.updateProfileFrom(claim, blockstack_id)
 				defer.returnValue(True)
 			else:
 				try:
 					user_id, access_token = (yield self.account_handler.register(localpart=blockstack_id))
-					logger.info("User %s created, logging in",blockstack_id)
+					logger.info("User %s created, logging in", blockstack_id)
+					self.updateProfileFrom(claim, blockstack_id)
 					defer.returnValue(True)
 				except:
 					logger.warning("User %s not created", blockstack_id)
