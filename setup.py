@@ -14,8 +14,12 @@ setuptools.setup(
     url="https://github.com/friedger/matrix_blockstack_password_provider",
     packages=setuptools.find_packages(),
     classifiers=[
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    install_requires=["requests", "blockstack_zones", "twisted"],
 )
