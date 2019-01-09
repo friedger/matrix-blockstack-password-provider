@@ -35,4 +35,4 @@ ah.hs = HS()
 requests.post("http://auth.openintents.org/c/asdf")
 pwdProvider = BlockstackPasswordProvider(blockstack_config, ah)
 result = []
-print pwdProvider.check_password("@friedger.id:localhost", "asdf|https://chat.openintents.org")
+print pwdProvider.check_password("@1Maw8BjWgj6MWrBCfupqQuWANthMhefb2v:localhost", "asdf|https://chat.openintents.org|friedger.id")

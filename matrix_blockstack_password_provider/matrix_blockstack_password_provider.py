@@ -36,7 +36,7 @@ logger = logging.getLogger("synapse.blockstackpwds")
 
 
 class BlockstackPasswordProvider(object):
-    __version__ = "0.3.0"
+    __version__ = "0.4.0"
 
     def __init__(self, config, account_handler):
         self.account_handler = account_handler
@@ -81,15 +81,22 @@ class BlockstackPasswordProvider(object):
         if not password:
             defer.returnValue(False)
 
-        blockstack_id = user_id.split(":", 1)[0][1:]
-        pwd_parts = password.split("|")
+        localpart = user_id.split(":", 1)[0][1:]
+        id_address = localpart
+
+        pwd_parts = password.split("|") 
         txid = pwd_parts[0]
         app = pwd_parts[1]
+        blockstack_id = pwd_parts[2]
 
         r = requests.get(self.blockstack_node + '/v1/names/' + blockstack_id)
         if not r.status_code == requests.codes.ok:
             defer.returnValue(False)
         names_response = r.json()
+        
+        if (not blockstack_id == localpart) and (not names_response["address"] == id_address):
+            defer.returnValue(False)
+
         z = blockstack_zones.parse_zone_file(names_response["zonefile"])
 
         r = requests.get(z["uri"][0]["target"])
