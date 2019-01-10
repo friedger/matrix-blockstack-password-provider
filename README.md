@@ -23,5 +23,5 @@ The `endpoint` is optional and defaults to `https://core.blockstack.org`
 ### Client support
 * Currently only [OI Chat](https://chat.openintents.org) supports this type of authentication.
 * Client apps need to write a file `mxid.json` into the root of their gaia bucket. The content is the 
-challenge received from the home server. Then for authentication, the client needs to send the blockstack id as username and as password a client app generated nonce that was used when requesting the challenge together with the app domain in the format
-`nonce + "|" + appDomain`
+challenge received from a [home server auth endpoint](https://auth.openintents.org). Then for authentication, the client needs to send the id address as username and as password a client app generated nonce that was used when requesting the challenge together with the app domain in the format
+`nonce + "|" + appDomain + "|" + blockstackId` . Users can do this manually on a [account management site](https://github.com/friedger/matrix-blockstack-auth).
