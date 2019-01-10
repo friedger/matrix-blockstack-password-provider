@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="matrix_blockstack_password_provider",
-    version="0.4.1",
+    version="0.4.2",
     author="OpenIntents",
     author_email="support@openintents.org",
     description="Password provider for blockstack synapse server",
