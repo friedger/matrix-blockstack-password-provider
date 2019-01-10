@@ -32,7 +32,6 @@ class HS(object):
 ah = AccountHandler()
 ah.hs = HS()
 
-requests.post("http://auth.openintents.org/c/asdf")
 pwdProvider = BlockstackPasswordProvider(blockstack_config, ah)
 result = []
-print pwdProvider.check_password("@1Maw8BjWgj6MWrBCfupqQuWANthMhefb2v:localhost", "asdf|https://chat.openintents.org|friedger.id")
+print pwdProvider.check_password("@1Maw8BjWgj6MWrBCfupqQuWANthMhefb2v:localhost", "1Maw8BjWgj6MWrBCfupqQuWANthMhefb2v0.1826811299562402|https://matrix.openintents.org|friedger.id")

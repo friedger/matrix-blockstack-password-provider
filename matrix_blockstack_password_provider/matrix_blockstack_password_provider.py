@@ -36,7 +36,7 @@ logger = logging.getLogger("synapse.blockstackpwds")
 
 
 class BlockstackPasswordProvider(object):
-    __version__ = "0.4.0"
+    __version__ = "0.4.1"
 
     def __init__(self, config, account_handler):
         self.account_handler = account_handler
@@ -63,15 +63,15 @@ class BlockstackPasswordProvider(object):
         defer.returnValue(is_user_app)
 
     @defer.inlineCallbacks
-    def updateProfileFrom(self, claim, blockstack_id):
+    def updateProfileFrom(self, claim, blockstack_id, id_address):
         try:
             store = yield self.account_handler.hs.get_profile_handler().store
             name = claim["name"]
             logger.info("User name set to %s", name)
-            yield store.set_profile_displayname(blockstack_id, name)
+            yield store.set_profile_displayname(id_address, name)
             avatar = claim["image"][0]["contentUrl"]
             logger.info("User avatar set to %s", avatar)
-            yield store.set_profile_avatar_url(blockstack_id, avatar)
+            yield store.set_profile_avatar_url(id_address, avatar)
         except Exception as err:
             logger.warn("failed to update profile (%s)", err)
 
@@ -121,21 +121,21 @@ class BlockstackPasswordProvider(object):
 
         if mxid_response == challenge_text:
             if (yield self.account_handler.check_user_exists(user_id)):
-                logger.info("User %s exists, logging in", user_id)
-                self.updateProfileFrom(claim, blockstack_id)
+                logger.info("User %s exists, logging in", localpart)
+                self.updateProfileFrom(claim, blockstack_id, localpart)
                 defer.returnValue(True)
             else:
                 try:
-                    user_id, access_token = (yield self.account_handler.register(localpart=blockstack_id))
-                    logger.info("User %s created, logging in", blockstack_id)
-                    self.updateProfileFrom(claim, blockstack_id)
+                    user_id, access_token = (yield self.account_handler.register(localpart=localpart))
+                    logger.info("User %s created, logging in", localpart)
+                    self.updateProfileFrom(claim, blockstack_id, localpart)
                     defer.returnValue(True)
                 except Exception as err:
                     logger.warning("User %s not created (%s)",
-                                   blockstack_id, err)
+                                   localpart, err)
                     defer.returnValue(False)
         else:
-            logger.warning("Wrong password for user %s", blockstack_id)
+            logger.warning("Wrong password for user %s", localpart)
             defer.returnValue(False)
 
     @staticmethod
