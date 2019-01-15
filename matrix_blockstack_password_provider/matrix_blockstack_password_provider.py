@@ -36,7 +36,7 @@ logger = logging.getLogger("synapse.blockstackpwds")
 
 
 class BlockstackPasswordProvider(object):
-    __version__ = "0.4.2"
+    __version__ = "0.5.0"
 
     def __init__(self, config, account_handler):
         self.account_handler = account_handler
@@ -75,6 +75,14 @@ class BlockstackPasswordProvider(object):
         except Exception as err:
             logger.warn("failed to update profile (%s)", err)
 
+    def getUserAppAddress(self, gaia_url):
+        url_parts = gaia_url.split("/") 
+        if (url_parts > 2):
+            user_app_address = url_parts[len(url_parts) - 2]
+            return user_app_address.lower()
+        else:
+            return ""
+
     @defer.inlineCallbacks
     def check_password(self, user_id, password):
         logger.info("check password")
@@ -96,10 +104,6 @@ class BlockstackPasswordProvider(object):
             defer.returnValue(False)
         names_response = r.json()
         
-        if (not blockstack_id == localpart) and (not names_response["address"].lower() == id_address):
-            logger.debug("id address and localpart do not match")
-            defer.returnValue(False)
-
         z = blockstack_zones.parse_zone_file(names_response["zonefile"])
 
         r = requests.get(z["uri"][0]["target"])
@@ -108,6 +112,19 @@ class BlockstackPasswordProvider(object):
             defer.returnValue(False)
         zone_file_response = r.json()
         claim = zone_file_response[0]["decodedToken"]["payload"]["claim"]
+
+        account_type = -1
+        if localpart == blockstack_id:
+            account_type = 0
+        elif localpart == names_response["address"].lower():
+            account_type = 1
+        elif claim["apps"][app] and localpart == self.getUserAppAddress(claim["apps"][app]):
+            account_type = 2 
+            
+        if (account_type < 0):
+            logger.debug("localpart does not belong to user")
+            defer.returnValue(False)
+
 
         challengeUrl = "http://auth.openintents.org/c/" + txid
         r = requests.get(challengeUrl)

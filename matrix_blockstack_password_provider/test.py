@@ -34,4 +34,5 @@ ah.hs = HS()
 
 pwdProvider = BlockstackPasswordProvider(blockstack_config, ah)
 result = []
-print pwdProvider.check_password("@1maw8bjwgj6mwrbcfupqquwanthmhefb2v:localhost", "1Maw8BjWgj6MWrBCfupqQuWANthMhefb2v0.1826811299562402|https://matrix.openintents.org|friedger.id")
+localpart = "13ibxaRcfKKhrnfu3QPktKVXEjQNU4r4aD".lower()
+print pwdProvider.check_password("@" + localpart + ":localhost", "1Maw8BjWgj6MWrBCfupqQuWANthMhefb2v0.7965665230758666|https://matrix.openintents.org|friedger.id")
