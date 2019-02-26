@@ -43,7 +43,7 @@ class BlockstackPasswordProvider(object):
         self.blockstack_node = config.blockstack_node
 
     @defer.inlineCallbacks
-    def checkProfile(self, app, claims):
+    def checkWhiteListedAppsInProfile(self, app, claim):
         # find status for the app domain via profile
         # currently there is no chat profile define
         # therefore, use chat.openintents.org for now.
@@ -76,7 +76,7 @@ class BlockstackPasswordProvider(object):
             logger.warn("failed to update profile (%s)", err)
 
     def getUserAppAddress(self, gaia_url):
-        url_parts = gaia_url.split("/") 
+        url_parts = gaia_url.split("/")
         if (url_parts > 2):
             user_app_address = url_parts[len(url_parts) - 2]
             return user_app_address.lower()
@@ -84,16 +84,10 @@ class BlockstackPasswordProvider(object):
             return ""
 
     @defer.inlineCallbacks
-    def check_password(self, user_id, password):
-        logger.info("check password")
-        if not password:
-            logger.debug("no password provided")
-            defer.returnValue(False)
-
-        localpart = user_id.split(":", 1)[0][1:]
+    def check_password_blockstack(self, user_id, password, localpart):
         id_address = localpart
 
-        pwd_parts = password.split("|") 
+        pwd_parts = password.split("|")
         txid = pwd_parts[0]
         app = pwd_parts[1]
         blockstack_id = pwd_parts[2]
@@ -103,7 +97,7 @@ class BlockstackPasswordProvider(object):
             logger.debug("invalid blockstack name")
             defer.returnValue(False)
         names_response = r.json()
-        
+
         z = blockstack_zones.parse_zone_file(names_response["zonefile"])
 
         r = requests.get(z["uri"][0]["target"])
@@ -118,9 +112,9 @@ class BlockstackPasswordProvider(object):
             account_type = 0
         elif localpart == names_response["address"].lower():
             account_type = 1
-        elif claim["apps"][app] and localpart == self.getUserAppAddress(claim["apps"][app]):
-            account_type = 2 
-            
+        elif claim["apps"].get(app) and localpart == self.getUserAppAddress(claim["apps"][app]):
+            account_type = 2
+
         if (account_type < 0):
             logger.debug("localpart does not belong to user")
             defer.returnValue(False)
@@ -160,6 +154,52 @@ class BlockstackPasswordProvider(object):
         else:
             logger.warning("Wrong password for user %s", localpart)
             defer.returnValue(False)
+
+    @defer.inlineCallbacks
+    def check_password_scatter(self, user_id, password, localpart):
+        accountName = localpart
+
+        pwd_parts = password.split("|")
+        txid = pwd_parts[0]
+        app = pwd_parts[1]
+        signature = pwd_parts[2]
+
+        r = requests.post('https://auth.diri.chat/login', data={"message": accountName, "signature": signature})
+        if not r.status_code == requests.codes.ok:
+            logger.debug("invalid signature")
+            defer.returnValue(False)
+        auth_response = r.json()
+        if (auth_response.authenticated):
+            if (yield self.account_handler.check_user_exists(user_id)):
+                logger.info("User %s exists, logging in", localpart)
+                defer.returnValue(True)
+            else:
+                try:
+                    user_id, access_token = (yield self.account_handler.register(localpart=localpart))
+                    logger.info("User %s created, logging in", localpart)
+                    defer.returnValue(True)
+                except Exception as err:
+                    logger.warning("User %s not created (%s)",
+                                   localpart, err)
+                    defer.returnValue(False)
+        else:
+            logger.warning("Wrong password for user %s", localpart)
+            defer.returnValue(False)
+
+    @defer.inlineCallbacks
+    def check_password(self, user_id, password):
+        logger.info("check password")
+        if not password:
+            logger.debug("no password provided")
+            defer.returnValue(False)
+
+        localpart = user_id.split(":", 1)[0][1:]
+        if (len(localpart) == 12):
+          result = yield self.check_password_scatter(user_id, password, localpart)
+          defer.returnValue(result)
+        else:
+          result = yield self.check_password_blockstack(user_id, password, localpart)
+          defer.returnValue(result)
 
     @staticmethod
     def parse_config(config):

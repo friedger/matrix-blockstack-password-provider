@@ -12,7 +12,7 @@ blockstack_config.blockstack_node = "https://core.blockstack.org"
 class AccountHandler(object):
     def check_user_exists(self, name):
         return False
-    
+
     def register(self, localpart):
         return localpart, "abc"
 
@@ -21,7 +21,7 @@ class Store(object):
         pass
     def set_profile_avatar_url(self, user, url):
         pass
-        
+
 class ProfileHandler(object):
     store = Store()
 
@@ -36,3 +36,8 @@ pwdProvider = BlockstackPasswordProvider(blockstack_config, ah)
 result = []
 localpart = "13ibxaRcfKKhrnfu3QPktKVXEjQNU4r4aD".lower()
 print pwdProvider.check_password("@" + localpart + ":localhost", "1Maw8BjWgj6MWrBCfupqQuWANthMhefb2v0.7965665230758666|https://matrix.openintents.org|friedger.id")
+
+result = []
+localpart = "friedgermuef".lower()
+print pwdProvider.check_password("@" + localpart + ":localhost", "1Maw8BjWgj6MWrBCfupqQuWANthMhefb2v0.7965665230758666|https://matrix.openintents.org|friedger.id")
+
