@@ -86,7 +86,7 @@ class BlockstackPasswordProvider(object):
     @defer.inlineCallbacks
     def check_password_blockstack(self, user_id, password, localpart):
         id_address = localpart
-
+        logger.debug("checking blockstack:" + id_address + " " + password)
         pwd_parts = password.split("|")
         txid = pwd_parts[0]
         app = pwd_parts[1]
@@ -158,6 +158,7 @@ class BlockstackPasswordProvider(object):
     @defer.inlineCallbacks
     def check_password_scatter(self, user_id, password, localpart):
         accountName = localpart
+        logger.debug("checking scatter:" + accountName + " " + password)
 
         pwd_parts = password.split("|")
         txid = pwd_parts[0]
@@ -167,8 +168,9 @@ class BlockstackPasswordProvider(object):
             r = requests.post('https://auth.diri.chat/login', json={"message": message, "signature": signature}, headers={"Content-Type":"application/json"})
         except Exception as err:
             r = requests.post('http://auth.diri.chat/login', json={"message": message, "signature": signature}, headers={"Content-Type":"application/json"})
+        logger.info("response: %s", r)
         if not r.status_code == requests.codes.ok:
-            logger.debug("invalid signature" + r.text)
+            logger.info("invalid signature:" + r.text)
             defer.returnValue(False)
         auth_response = r.json()
         if (auth_response['authenticated']):
@@ -195,13 +197,17 @@ class BlockstackPasswordProvider(object):
             logger.debug("no password provided")
             defer.returnValue(False)
 
-        localpart = user_id.split(":", 1)[0][1:]
-        if (len(localpart) == 12):
-          result = yield self.check_password_scatter(user_id, password, localpart)
-          defer.returnValue(result)
-        else:
-          result = yield self.check_password_blockstack(user_id, password, localpart)
-          defer.returnValue(result)
+        try:
+            localpart = user_id.split(":", 1)[0][1:]
+            if (len(localpart) == 12):
+                result = yield self.check_password_scatter(user_id, password, localpart)
+                defer.returnValue(result)
+            else:
+                result = yield self.check_password_blockstack(user_id, password, localpart)
+                defer.returnValue(result)
+        except Exception as err:
+            logger.warning("Authentication failed: %s", err)
+            defer.returnValue(False)
 
     @staticmethod
     def parse_config(config):
