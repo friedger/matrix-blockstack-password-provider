@@ -36,7 +36,7 @@ logger = logging.getLogger("synapse.blockstackpwds")
 
 
 class BlockstackPasswordProvider(object):
-    __version__ = "0.5.0"
+    __version__ = "0.6.0"
 
     def __init__(self, config, account_handler):
         self.account_handler = account_handler
