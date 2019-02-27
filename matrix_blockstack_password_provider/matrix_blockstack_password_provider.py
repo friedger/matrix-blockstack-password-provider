@@ -86,7 +86,7 @@ class BlockstackPasswordProvider(object):
     @defer.inlineCallbacks
     def check_password_blockstack(self, user_id, password, localpart):
         id_address = localpart
-        logger.debug("checking blockstack:" + id_address + " " + password)
+        logger.info("checking blockstack:" + id_address + " " + password)
         pwd_parts = password.split("|")
         txid = pwd_parts[0]
         app = pwd_parts[1]
@@ -94,7 +94,7 @@ class BlockstackPasswordProvider(object):
 
         r = requests.get(self.blockstack_node + '/v1/names/' + blockstack_id)
         if not r.status_code == requests.codes.ok:
-            logger.debug("invalid blockstack name")
+            logger.info("invalid blockstack name")
             defer.returnValue(False)
         names_response = r.json()
 
@@ -102,7 +102,7 @@ class BlockstackPasswordProvider(object):
 
         r = requests.get(z["uri"][0]["target"])
         if not r.status_code == requests.codes.ok:
-            logger.debug("invalid profile url")
+            logger.info("invalid profile url")
             defer.returnValue(False)
         zone_file_response = r.json()
         claim = zone_file_response[0]["decodedToken"]["payload"]["claim"]
@@ -116,14 +116,14 @@ class BlockstackPasswordProvider(object):
             account_type = 2
 
         if (account_type < 0):
-            logger.debug("localpart does not belong to user")
+            logger.info("localpart does not belong to user")
             defer.returnValue(False)
 
 
         challengeUrl = "http://auth.openintents.org/c/" + txid
         r = requests.get(challengeUrl)
         if not r.status_code == requests.codes.ok:
-            logger.debug("invalid txid")
+            logger.info("invalid txid")
             defer.returnValue(False)
         challenge_text = r.json()["challenge"]
         logger.info("Challenge for user %s: %s", user_id, challenge_text)
@@ -131,7 +131,7 @@ class BlockstackPasswordProvider(object):
         responseUrl = claim["apps"][app] + "mxid.json"
         r = requests.get(responseUrl)
         if not r.status_code == requests.codes.ok:
-            logger.debug("invalid mxid.json url")
+            logger.info("invalid mxid.json url")
             defer.returnValue(False)
         mxid_response = r.text
         logger.info("Response for user %s: %s", user_id, mxid_response)
@@ -158,7 +158,7 @@ class BlockstackPasswordProvider(object):
     @defer.inlineCallbacks
     def check_password_scatter(self, user_id, password, localpart):
         accountName = localpart
-        logger.debug("checking scatter:" + accountName + " " + password)
+        logger.info("checking scatter:" + accountName + " " + password)
 
         pwd_parts = password.split("|")
         txid = pwd_parts[0]
@@ -194,7 +194,7 @@ class BlockstackPasswordProvider(object):
     def check_password(self, user_id, password):
         logger.info("check password")
         if not password:
-            logger.debug("no password provided")
+            logger.info("no password provided")
             defer.returnValue(False)
 
         try:
