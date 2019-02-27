@@ -163,7 +163,10 @@ class BlockstackPasswordProvider(object):
         txid = pwd_parts[0]
         message = pwd_parts[1]
         signature = pwd_parts[2]
-        r = requests.post('http://auth.diri.chat/login', json={"message": message, "signature": signature}, headers={"Content-Type":"application/json"})
+        try:
+            r = requests.post('https://auth.diri.chat/login', json={"message": message, "signature": signature}, headers={"Content-Type":"application/json"})
+        except Exception as err:
+            r = requests.post('http://auth.diri.chat/login', json={"message": message, "signature": signature}, headers={"Content-Type":"application/json"})
         if not r.status_code == requests.codes.ok:
             logger.debug("invalid signature" + r.text)
             defer.returnValue(False)
