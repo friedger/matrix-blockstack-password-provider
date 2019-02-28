@@ -192,7 +192,7 @@ class BlockstackPasswordProvider(object):
 
     @defer.inlineCallbacks
     def check_password(self, user_id, password):
-        logger.info("check password")
+        logger.info("check password version %s", self.__version__)
         if not password:
             logger.info("no password provided")
             defer.returnValue(False)
@@ -217,6 +217,8 @@ class BlockstackPasswordProvider(object):
         blockstack_config.enabled = config.get("enabled", False)
         blockstack_config.blockstack_node = config.get(
             "blockstack_node", "https://core.blockstack.org")
+        logger.info("matrix_blockstack_password_provider version %s", "0.6.4")
+        logger.info("using %s", blockstack_config.blockstack_node)
         return blockstack_config
 
     def cleanup(self):
