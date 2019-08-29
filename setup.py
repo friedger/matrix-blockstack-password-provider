@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="matrix_blockstack_password_provider",
-    version="0.6.4",
+    version="0.7.0",
     author="OpenIntents",
     author_email="support@openintents.org",
     description="Password provider for blockstack/EOS synapse server",
@@ -14,12 +14,10 @@ setuptools.setup(
     url="https://github.com/friedger/matrix_blockstack_password_provider",
     packages=setuptools.find_packages(),
     classifiers=[
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.6",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=["requests", "blockstack_zones", "twisted"],
+    install_requires=["requests", "blockstack_zones-py3", "twisted"],
 )

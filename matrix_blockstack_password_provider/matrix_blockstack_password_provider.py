@@ -36,7 +36,7 @@ logger = logging.getLogger("synapse.blockstackpwds")
 
 
 class BlockstackPasswordProvider(object):
-    __version__ = "0.6.4"
+    __version__ = "0.7.0"
 
     def __init__(self, config, account_handler):
         self.account_handler = account_handler
@@ -77,7 +77,7 @@ class BlockstackPasswordProvider(object):
 
     def getUserAppAddress(self, gaia_url):
         url_parts = gaia_url.split("/")
-        if (url_parts > 2):
+        if (len(url_parts) > 2):
             user_app_address = url_parts[len(url_parts) - 2]
             return user_app_address.lower()
         else:
@@ -217,7 +217,7 @@ class BlockstackPasswordProvider(object):
         blockstack_config.enabled = config.get("enabled", False)
         blockstack_config.blockstack_node = config.get(
             "blockstack_node", "https://core.blockstack.org")
-        logger.info("matrix_blockstack_password_provider version %s", "0.6.4")
+        logger.info("matrix_blockstack_password_provider version %s", "0.7.0")
         logger.info("using %s", blockstack_config.blockstack_node)
         return blockstack_config
 

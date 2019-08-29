@@ -35,9 +35,9 @@ ah.hs = HS()
 pwdProvider = BlockstackPasswordProvider(blockstack_config, ah)
 result = []
 localpart = "13ibxaRcfKKhrnfu3QPktKVXEjQNU4r4aD".lower()
-print pwdProvider.check_password("@" + localpart + ":localhost", "1Maw8BjWgj6MWrBCfupqQuWANthMhefb2v0.7965665230758666|https://matrix.openintents.org|friedger.id")
+print(pwdProvider.check_password("@" + localpart + ":localhost", "1Maw8BjWgj6MWrBCfupqQuWANthMhefb2v0.7965665230758666|https://matrix.openintents.org|friedger.id"))
 
 result = []
 localpart = "friedgermuef".lower()
-print pwdProvider.check_password("@" + localpart + ":localhost", "1Maw8BjWgj6MWrBCfupqQuWANthMhefb2v0.7965665230758666|friedgermuef would like to login using the active permission. Block ID: 44952862 3D444BD06ADC|SIG_K1_Ki7Wvjed6r8jzyKv8sRmTJJbE3hxPEA1shCMsd5Z3PMW2KqEAc6tTVQLtVddEXjpwNwxD3sQQ4EnNbF1N5TxnWK2PXcEsT")
+print(pwdProvider.check_password("@" + localpart + ":localhost", "1Maw8BjWgj6MWrBCfupqQuWANthMhefb2v0.7965665230758666|friedgermuef would like to login using the active permission. Block ID: 44952862 3D444BD06ADC|SIG_K1_Ki7Wvjed6r8jzyKv8sRmTJJbE3hxPEA1shCMsd5Z3PMW2KqEAc6tTVQLtVddEXjpwNwxD3sQQ4EnNbF1N5TxnWK2PXcEsT"))
 
