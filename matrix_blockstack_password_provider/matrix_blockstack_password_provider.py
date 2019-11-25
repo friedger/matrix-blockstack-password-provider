@@ -30,6 +30,13 @@ import logging
 import requests
 import traceback
 import sys
+import jwt
+import base64
+import json
+import coincurve
+import encodings
+import codecs
+import binascii
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger("synapse.blockstackpwds")
@@ -82,6 +89,36 @@ class BlockstackPasswordProvider(object):
             return user_app_address.lower()
         else:
             return ""
+
+    def base64url_decode(self, input):
+        rem = len(input) % 4
+
+        if rem > 0:
+            input += b"=" * (4 - rem)
+
+        return base64.urlsafe_b64decode(input)
+
+    @defer.inlineCallbacks
+    def check_password_jwt(self, user_id, password, localpart):
+        pwd = password.encode("utf-8")
+        try:
+            signing_input, crypto_segment = pwd.rsplit(b".", 1)
+            header_segment, payload_segment = signing_input.split(b".", 1)
+        except ValueError:
+            raise DecodeError("Not enough segments")
+        logger.info(self.base64url_decode(header_segment))
+        payload = self.base64url_decode(payload_segment)
+        payload = json.loads(payload.decode("utf-8"))
+        publicKey = payload["public_keys"][0]
+        logger.info(publicKey)
+        pubKey = bytes.fromhex(publicKey)
+        logger.info(pubKey)
+        sig = bytes.fromhex(crypto_segment.hex())
+        logger.info(sig)
+        logger.info(coincurve.ecdsa.der_to_cdata(crypto_segment))
+        logger.info("--")
+        coincurve.verify_signature(sig, payload_segment,  pubKey)
+        jwt.decode(password,publicKey, True, ["ES256K"])
 
     @defer.inlineCallbacks
     def check_password_blockstack(self, user_id, password, localpart):
@@ -201,6 +238,9 @@ class BlockstackPasswordProvider(object):
             localpart = user_id.split(":", 1)[0][1:]
             if (len(localpart) == 12):
                 result = yield self.check_password_scatter(user_id, password, localpart)
+                defer.returnValue(result)
+            elif password.startswith("ey"):
+                result = yield self.check_password_jwt(user_id, password, localpart)
                 defer.returnValue(result)
             else:
                 result = yield self.check_password_blockstack(user_id, password, localpart)
