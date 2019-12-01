@@ -37,6 +37,7 @@ import coincurve
 import encodings
 import codecs
 import binascii
+from datetime import datetime, timezone
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger("synapse.blockstackpwds")
@@ -115,10 +116,34 @@ class BlockstackPasswordProvider(object):
         logger.info(pubKey)
         sig = bytes.fromhex(crypto_segment.hex())
         logger.info(sig)
-        logger.info(coincurve.ecdsa.der_to_cdata(crypto_segment))
         logger.info("--")
         coincurve.verify_signature(sig, payload_segment,  pubKey)
-        jwt.decode(password,publicKey, True, ["ES256K"])
+
+        decodedToken = yield jwt.decode(password,publicKey, False, ["ES256K"])
+        now = (datetime.now(timezone.utc)-datetime(1970,1,1,tzinfo=timezone.utc)).total_seconds()
+        logger.info("%d %d %d", now, decodedToken["iat"], decodedToken["exp"])
+        assert decodedToken["iat"] < now
+        # assert decodedToken["exp"] > now
+        iss = decodedToken["iss"]
+        assert iss.startswith("did:btc-addr"), "Only iss from did:btc-addr supported"
+        assert iss[13:].lower() == localpart, "jwt not for username " + localpart
+
+        # token is valid
+        if (yield self.account_handler.check_user_exists(user_id)):
+            logger.info("User %s exists, logging in", localpart)
+            # todo: lookup and update profile
+            defer.returnValue(True)
+        else:
+            try:
+                user_id, access_token = (yield self.account_handler.register(localpart=localpart))
+                logger.info("User %s created, logging in", localpart)
+                # todo: lookup and update profile
+                defer.returnValue(True)
+            except Exception as err:
+                logger.warning("User %s not created (%s)",
+                                localpart, err)
+                defer.returnValue(False)
+
 
     @defer.inlineCallbacks
     def check_password_blockstack(self, user_id, password, localpart):
